@@ -1,0 +1,5 @@
+.env
+*.db
+*.session
+*.session-journal
+Pipfile.lock
