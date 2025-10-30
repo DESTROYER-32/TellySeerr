@@ -1,10 +1,8 @@
 name: Docker CI/CD
 
 on:
-  push:
-    branches: [ "main", "master" ]
-  pull_request:
-    branches: [ "main", "master" ]
+  release:
+    types: [created]
   
 permissions:
   contents: read
@@ -36,9 +34,8 @@ jobs:
         with:
           images: ${{ env.DOCKER_REPO }}
           tags: |
-            type=sha,format=long # Always tag with the commit hash
-            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master' }} # Only tag 'latest' on main/master branch
-
+            type=semver,pattern={{version}}
+            type=raw,value=latest
       - name: 🚀 Build and push Docker image
         uses: docker/build-push-action@v5
         with:
