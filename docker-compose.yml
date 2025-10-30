@@ -1,0 +1,20 @@
+services:
+  tellyseerr:
+    image: destroyer32/tellyseerr:latest
+    
+    container_name: tellyseerr 
+
+    build:
+      context: .
+      dockerfile: Dockerfile
+      
+    restart: unless-stopped
+    
+    env_file:
+      - .env
+
+    volumes:
+      - tellyseerr_data:/app/jellyseerr_bot.db
+
+volumes:
+  tellyseerr_data:

@@ -1,5 +1,5 @@
 # [TellySeerr]
-[![Python Version](https://img.shields.io/badge/python-3.12-blue.svg)](https://www.python.org/downloads/)
+[![Python Version](https://img.shields.io/badge/python-3.11-blue.svg)](https://www.python.org/downloads/)
 [![Linter: Ruff](https://img.shields.io/badge/linter-ruff-brightgreen.svg)](https://github.com/astral-sh/ruff)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
@@ -40,7 +40,7 @@ A powerful, all-in-one Telegram bot for managing your Jellyfin and Jellyseerr se
 2.  Your **Telegram API ID & Hash**. Get these from [my.telegram.org](https://my.telegram.org).
 3.  A **Jellyfin** server. You need your **Server URL** and an **API Key** (generate one in Dashboard > API Keys).
 4.  A **Jellyseerr** server. You need your **Server URL** and your **API Key** (find in Jellyseerr Settings > General).
-5.  **Python 3.12+**
+5.  **Python 3.11+**
 6.  **Pipenv** (for managing dependencies).
 
 ### ⚙️ Installation & Setup
