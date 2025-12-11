@@ -1,8 +1,11 @@
 import httpx
 import html
+import logging
 
 from config import settings
 from bot.services.http_clients import http_client, jellyseerr_headers
+
+logger = logging.getLogger(__name__)
 
 TMDB_IMAGE_BASE_URL = "https://image.tmdb.org/t/p/w500"
 
@@ -74,7 +77,7 @@ async def format_request_item(
         response.raise_for_status()
         media_info = response.json()
     except httpx.RequestError as e:
-        print(f"Error fetching media details: {e}")
+        logger.error(f"Error fetching media details: {e}")
         return "<b>Error</b>: Could not fetch details for this request.", ""
 
     if media_type == "tv":

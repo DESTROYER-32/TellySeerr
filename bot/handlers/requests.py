@@ -1,4 +1,5 @@
 import httpx
+import logging
 from pyrogram import Client, filters
 from pyrogram.types import Message, CallbackQuery, InputMediaPhoto
 from pyrogram.enums import ParseMode
@@ -10,6 +11,8 @@ from bot.services.http_clients import http_client, jellyseerr_headers
 from bot.services.database import get_linked_user
 from bot.helpers.formatting import format_request_item
 from bot.helpers.markup import create_requests_pagination_markup
+
+logger = logging.getLogger(__name__)
 
 
 @app.on_message(filters.command("requests", prefixes="/"))
@@ -114,7 +117,7 @@ async def requests_pagination_handler(client: Client, callback_query: CallbackQu
                 client.request_cache = {}
             client.request_cache[user_id] = user_requests_data
         except Exception as e:
-            print(f"Error re-fetching requests: {e}")
+            logger.error(f"Error re-fetching requests: {e}")
             await callback_query.answer("Error re-fetching requests.", show_alert=True)
             return
 
@@ -146,7 +149,7 @@ async def requests_pagination_handler(client: Client, callback_query: CallbackQu
                 reply_markup=markup,
             )
         except Exception as e:
-            print(f"Error updating poster in requests pagination: {e}")
+            logger.error(f"Error updating poster in requests pagination: {e}")
             await callback_query.edit_message_caption(
                 caption=text, reply_markup=markup, parse_mode=ParseMode.HTML
             )

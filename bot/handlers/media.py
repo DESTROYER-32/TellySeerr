@@ -42,7 +42,7 @@ async def _search_jellyseerr(query: str):
         http_client.search_cache[query] = (results, datetime.utcnow())
         return results
     except httpx.RequestError as e:
-        print(f"Error searching Jellyseerr: {e}")
+        logger.error(f"Error searching Jellyseerr: {e}")
         return []
 
 
@@ -70,7 +70,7 @@ async def _discover_jellyseerr():
         http_client.discover_cache = (results, datetime.utcnow())
         return results
     except httpx.RequestError as e:
-        print(f"Error discovering media: {e}")
+        logger.error(f"Error discovering media: {e}")
         return []
 
 
