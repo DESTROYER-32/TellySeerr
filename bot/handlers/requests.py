@@ -1,6 +1,6 @@
 import httpx
 from pyrogram import Client, filters
-from pyrogram.types import Message, CallbackQuery
+from pyrogram.types import Message, CallbackQuery, InputMediaPhoto
 from pyrogram.enums import ParseMode
 
 from bot import app
@@ -135,17 +135,22 @@ async def requests_pagination_handler(client: Client, callback_query: CallbackQu
         int(user_id), new_index, len(user_requests_data)
     )
 
-    try:
-        await callback_query.edit_message_media(
-            media={
-                "type": "photo",
-                "media": photo_url,
-                "caption": text,
-                "parse_mode": ParseMode.HTML,
-            },
-            reply_markup=markup,
-        )
-    except Exception:
+    if photo_url:
+        try:
+            await callback_query.edit_message_media(
+                media=InputMediaPhoto(
+                    media=photo_url,
+                    caption=text,
+                    parse_mode=ParseMode.HTML,
+                ),
+                reply_markup=markup,
+            )
+        except Exception as e:
+            print(f"Error updating poster in requests pagination: {e}")
+            await callback_query.edit_message_caption(
+                caption=text, reply_markup=markup, parse_mode=ParseMode.HTML
+            )
+    else:
         await callback_query.edit_message_caption(
             caption=text, reply_markup=markup, parse_mode=ParseMode.HTML
         )

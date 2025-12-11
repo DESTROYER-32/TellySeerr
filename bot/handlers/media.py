@@ -4,7 +4,7 @@ import logging
 from urllib.parse import urlencode, quote
 from datetime import datetime
 from pyrogram import Client, filters
-from pyrogram.types import Message, CallbackQuery
+from pyrogram.types import Message, CallbackQuery, InputMediaPhoto
 from pyrogram.enums import ParseMode
 
 from bot import app
@@ -191,17 +191,22 @@ async def media_pagination_handler(client: Client, callback_query: CallbackQuery
         tmdb_id=item.get("id"),
     )
 
-    try:
-        await callback_query.edit_message_media(
-            media={
-                "type": "photo",
-                "media": photo_url,
-                "caption": text,
-                "parse_mode": ParseMode.HTML,
-            },
-            reply_markup=markup,
-        )
-    except Exception:
+    if photo_url:
+        try:
+            await callback_query.edit_message_media(
+                media=InputMediaPhoto(
+                    media=photo_url,
+                    caption=text,
+                    parse_mode=ParseMode.HTML,
+                ),
+                reply_markup=markup,
+            )
+        except Exception as e:
+            logger.error(f"Error updating poster in media pagination: {e}")
+            await callback_query.edit_message_caption(
+                caption=text, reply_markup=markup, parse_mode=ParseMode.HTML
+            )
+    else:
         await callback_query.edit_message_caption(
             caption=text, reply_markup=markup, parse_mode=ParseMode.HTML
         )

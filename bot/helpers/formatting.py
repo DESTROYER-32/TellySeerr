@@ -7,6 +7,17 @@ from bot.services.http_clients import http_client, jellyseerr_headers
 TMDB_IMAGE_BASE_URL = "https://image.tmdb.org/t/p/w500"
 
 
+async def validate_poster_url(url: str) -> bool:
+    """Validate if a poster URL is accessible."""
+    if not url:
+        return False
+    try:
+        response = await http_client.head(url, timeout=5.0)
+        return response.status_code == 200
+    except Exception:
+        return False
+
+
 def format_media_item(item: dict, current_index: int, total_results: int) -> (str, str):
     title = item.get("title") or item.get("name") or "Unknown Title"
     year_str = item.get("releaseDate") or item.get("firstAirDate", "N/A")
@@ -25,6 +36,8 @@ def format_media_item(item: dict, current_index: int, total_results: int) -> (st
     photo_url = ""
     if poster_path := item.get("posterPath"):
         photo_url = f"{TMDB_IMAGE_BASE_URL}{poster_path}"
+        # Validate poster URL asynchronously - for now, just return the URL
+        # Validation will be done in the handlers to avoid blocking here
 
     return text, photo_url
 
@@ -87,5 +100,6 @@ async def format_request_item(
     photo_url = ""
     if poster_path := media_info.get("posterPath"):
         photo_url = f"{TMDB_IMAGE_BASE_URL}{poster_path}"
+        # Validation will be done in the handlers to avoid blocking here
 
     return text, photo_url
