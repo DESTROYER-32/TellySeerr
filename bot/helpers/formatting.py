@@ -34,7 +34,8 @@ def format_media_item(item: dict, current_index: int, total_results: int) -> (st
     text = f"<b>{title} ({year})</b>\n"
     text += f"<i>{media_type}</i>\n\n"
     text += f"{overview}\n\n"
-    text += f"Result {current_index + 1} of {total_results}"
+    if total_results > 1:
+        text += f"Result {current_index + 1} of {total_results}"
 
     photo_url = ""
     if poster_path := item.get("posterPath"):
@@ -98,7 +99,8 @@ async def format_request_item(
     text += f"<b>Status:</b> {status}\n"
     text += f"<b>Type:</b> {media_type.capitalize()}\n"
     text += f"<b>Requested On:</b> {requested_date}\n\n"
-    text += f"Request {current_index + 1} of {total_results}"
+    if total_results > 1:
+        text += f"Request {current_index + 1} of {total_results}"
 
     photo_url = ""
     if poster_path := media_info.get("posterPath"):

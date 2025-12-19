@@ -28,6 +28,11 @@ HELP_TEXT = """
 • `/requests`: View the status of your past requests.
 • `/watch`: See your personal watch statistics from Jellyfin.
 
+**Direct Link Support:**
+You can also send TMDB links directly to request media:
+• Send TMDB links like: `https://themoviedb.org/movie/550-fight-club`
+• Send TMDB TV links like: `https://tmdb.org/tv/1399-breaking-bad`
+
 **Admin Commands:**
 • `/invite` (reply to a user): Create a permanent account for the user.
 • `/trial` (reply to a user): Create a 7-day trial account for the user.

@@ -4,3 +4,4 @@
 *.session-journal
 Pipfile.lock
 .python-version
+*.pyc

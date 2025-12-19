@@ -4,7 +4,13 @@ import logging
 from urllib.parse import urlencode, quote
 from datetime import datetime
 from pyrogram import Client, filters
-from pyrogram.types import Message, CallbackQuery, InputMediaPhoto
+from pyrogram.types import (
+    Message,
+    CallbackQuery,
+    InputMediaPhoto,
+    InlineKeyboardButton,
+    InlineKeyboardMarkup,
+)
 from pyrogram.enums import ParseMode
 
 from bot import app
@@ -18,6 +24,8 @@ from bot.helpers.markup import create_media_pagination_markup
 logger = logging.getLogger(__name__)
 
 CACHE_TTL_SECONDS = 3600  # 1 hour
+# Import shared state for tracking requested items
+from bot.state import requested_items
 
 
 async def _search_jellyseerr(query: str):
@@ -37,7 +45,12 @@ async def _search_jellyseerr(query: str):
             f"{search_url}?{params}", headers=jellyseerr_headers
         )
         response.raise_for_status()
-        results = response.json().get("results", [])
+        all_results = response.json().get("results", [])
+
+        # Filter to only include movies and TV shows
+        results = [
+            item for item in all_results if item.get("mediaType") in ["movie", "tv"]
+        ]
 
         http_client.search_cache[query] = (results, datetime.utcnow())
         return results
@@ -126,12 +139,14 @@ async def discover_cmd(client: Client, message: Message):
     query = "discover"
     item = results[0]
     text, photo_url = format_media_item(item, 0, len(results))
+    is_requested = (item.get("mediaType"), item.get("id")) in requested_items
     markup = create_media_pagination_markup(
         query=query,
         current_index=0,
         total_results=len(results),
         media_type=item.get("mediaType"),
         tmdb_id=item.get("id"),
+        is_requested=is_requested,
     )
 
     if photo_url:
@@ -161,6 +176,10 @@ async def media_pagination_handler(client: Client, callback_query: CallbackQuery
         else:
             results = await _discover_jellyseerr()
 
+    elif query == "url_lookup":
+        await callback_query.answer("No more results to navigate.")
+        return
+
     else:
         cached_data = getattr(http_client, "search_cache", {}).get(query)
         if cached_data:
@@ -183,12 +202,14 @@ async def media_pagination_handler(client: Client, callback_query: CallbackQuery
 
     item = results[new_index]
     text, photo_url = format_media_item(item, new_index, len(results))
+    is_requested = (item.get("mediaType"), item.get("id")) in requested_items
     markup = create_media_pagination_markup(
         query=query,
         current_index=new_index,
         total_results=len(results),
         media_type=item.get("mediaType"),
         tmdb_id=item.get("id"),
+        is_requested=is_requested,
     )
 
     if photo_url:
@@ -244,9 +265,54 @@ async def media_request_handler(client: Client, callback_query: CallbackQuery):
             request_url, headers=jellyseerr_headers, json=payload
         )
         response.raise_for_status()
+
+        # Mark this item as requested
+        requested_items.add((media_type, tmdb_id))
+
+        # Update the button to show "Requested"
+        try:
+            # Get the request button index (last button in keyboard)
+            keyboard = callback_query.message.reply_markup.inline_keyboard
+            request_button_row = keyboard[-1]
+            request_button = request_button_row[0]
+
+            # Create new keyboard with updated button
+            new_keyboard = keyboard.copy()
+            new_keyboard[-1] = [
+                InlineKeyboardButton(
+                    text="✅ Requested",
+                    callback_data=f"requested:{media_type}:{tmdb_id}",
+                )
+            ]
+
+            new_markup = InlineKeyboardMarkup(inline_keyboard=new_keyboard)
+            await callback_query.edit_message_reply_markup(reply_markup=new_markup)
+        except Exception as e:
+            logger.error(f"Error updating request button: {e}")
+
         await callback_query.answer("✅ Request successful!", show_alert=True)
     except httpx.HTTPStatusError as e:
         if e.response.status_code == 409:
+            # Already requested - update button state
+            requested_items.add((media_type, tmdb_id))
+            try:
+                keyboard = callback_query.message.reply_markup.inline_keyboard
+                request_button_row = keyboard[-1]
+                request_button = request_button_row[0]
+
+                new_keyboard = keyboard.copy()
+                new_keyboard[-1] = [
+                    InlineKeyboardButton(
+                        text="✅ Requested",
+                        callback_data=f"requested:{media_type}:{tmdb_id}",
+                    )
+                ]
+
+                new_markup = InlineKeyboardMarkup(inline_keyboard=new_keyboard)
+                await callback_query.edit_message_reply_markup(reply_markup=new_markup)
+            except Exception as e:
+                logger.error(f"Error updating request button for duplicate: {e}")
+
             await callback_query.answer(
                 "⚠️ Already available or requested.", show_alert=True
             )
@@ -256,3 +322,11 @@ async def media_request_handler(client: Client, callback_query: CallbackQuery):
             )
     except httpx.RequestError as e:
         await callback_query.answer(f"❌ Network error: {e}", show_alert=True)
+
+
+@app.on_callback_query(filters.regex(r"requested:(\w+):(\d+)"))
+async def requested_handler(client: Client, callback_query: CallbackQuery):
+    """Handle clicks on already requested items."""
+    await callback_query.answer(
+        "⚠️ This item has already been requested.", show_alert=True
+    )
